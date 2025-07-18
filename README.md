@@ -69,5 +69,11 @@ We provide a set of utility in the UI for debugging and/or capturing output.
   - Setting ``Freeze Frame ID`` to a value greater than -1 will freeze the frame at the specified frame ID.
     - Unfreeze to continue playing the motion!
     - If ``Replay for Accumulation`` is enabled, the frame will no longer freeze but will instead contribute to the ``AccumulationPass``. Enable ``View Accumulated Image`` and ``AccumulatePass -> Enabled`` to view the accumulation under motion, at the specified frame ID. This is useful for verifying unbiasedness under motion, but note that this is a *very slow* process since it effectively replays the entire motion sequence for one accumulated sample. 
-- Use the ``FrameDumper`` pass at the end to output every frame, which can be used to generate a video.
-  - Warning: disable ``Save PNG Files`` for better performance, and use FFMPEG to composite the output pixel maps.
+- Use the ``FrameDumper`` pass at the end to output every frame, which can be used to capture a sequence of frames and/or generate a video.
+  - Warning: if you want to generate a video, disable ``Save PNG Files`` for better performance, and use [FFmpeg](https://ffmpeg.org/).
+
+A video can be generated as follows:
+```
+ffmpeg.exe -framerate 30 -i "C:/frameDump/frame.%05d.pam" -c:v h264_nvenc -preset slow -b:v 4M -pix_fmt yuv420p output.mp4
+```
+Note that higher bitrates are usually necessary to capture the noise characteristics properly.
