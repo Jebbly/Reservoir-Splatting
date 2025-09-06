@@ -134,8 +134,6 @@ private:
         uint32_t    sampleGenerator = SAMPLE_GENERATOR_TINY_UNIFORM; ///< Pseudorandom sample generator type.
         bool        useBSDFSampling = true;                     ///< Use BRDF importance sampling, otherwise cosine-weighted hemisphere sampling.
         bool        useRussianRoulette = true;                  ///< Use russian roulette to terminate low throughput paths.
-        bool        useNEE = true;                              ///< Use next-event estimation (NEE). This enables shadow ray(s) from each path vertex.
-        bool        useMIS = true;                              ///< Use multiple importance sampling (MIS) when NEE is enabled.
         MISHeuristic misHeuristic = MISHeuristic::Balance;      ///< MIS heuristic.
         float       misPowerExponent = 2.f;                     ///< MIS exponent for the power heuristic. This is only used when 'PowerExp' is chosen.
         EmissiveLightSamplerType emissiveSampler = EmissiveLightSamplerType::Power;  ///< Emissive light sampler to use for NEE. The LightBVH is (potentially) position dependent, so it should be avoided.
@@ -265,7 +263,7 @@ private:
     std::vector<ref<Buffer>>        mMultiSortedReservoirs;                 ///> Linearized, sorted buffer of all reservoirs.
 
     // Temporal scatter visualization
-    bool                            mDumpScatterCount = false;              ///< Dump the scatter count on next run. 
+    bool                            mDumpScatterCount = false;              ///< Dump the scatter count on next run.
     std::string                     mScatterDumpDir = "c:/scatterCount/";   ///< Directory to output the scatter counts.
     std::string                     mScatterDumpFile = "dump.txt";          ///< File to output the scatter counts.
     ref<Fence>                      mpReadbackFence;                        ///< Readback fence for staging.

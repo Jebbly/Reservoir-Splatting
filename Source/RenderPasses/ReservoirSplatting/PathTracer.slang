@@ -25,7 +25,7 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
- 
+
 import Rendering.Lights.EnvMapSampler;
 import Rendering.Lights.EmissiveLightSampler;
 import Rendering.Lights.EmissiveLightSamplerHelpers;
@@ -263,14 +263,14 @@ struct PathTracer
         }
     };
 
-    struct VisibilityQuery 
+    struct VisibilityQuery
     {
         bool traceVisibilityRay(const Ray ray)
         {
             SceneRayQuery<kUseAlphaTest> sceneRayQuery;
             return sceneRayQuery.traceVisibilityRay(ray);
         }
-    };    
+    };
     /** Trace a ray to find the next hit.
         This replaces `PathTracer::nextHit` but without support for volume sampling.
         \param[in,out] path Path state.
@@ -284,7 +284,7 @@ struct PathTracer
         logTraceRay(PixelStatsRayType::ClosestHit);
         const Ray ray = path.getScatterRay();
 
-        ClosestHitQuery chq;        
+        ClosestHitQuery chq;
         float hitT;
         HitInfo hit = chq.traceRay(path, ray, hitT);
 
@@ -356,7 +356,7 @@ struct PathTracer
 
         // If we're at the first or second vertex, we care about which lobe was sampled.
         if (path.getVertexIndex() == 1)
-        {   
+        {
             path.reconnection.firstBSDFComponentType = componentType;
         }
         else if (path.getVertexIndex() == 2)
@@ -814,7 +814,7 @@ struct PathTracer
             Camera camera = gScene.camera;
             gCameraManager.orientCamera(camera, params.frameCount, path.time);
 
-            float3 lensLocal = camera.data.apertureRadius * (path.reconnection.lensSample.x * normalize(camera.data.cameraU) + 
+            float3 lensLocal = camera.data.apertureRadius * (path.reconnection.lensSample.x * normalize(camera.data.cameraU) +
                                                              path.reconnection.lensSample.y * normalize(camera.data.cameraV));
             float3 x0 = camera.data.posW + lensLocal;
 
@@ -895,14 +895,14 @@ struct PathTracer
 
         // Add emitted radiance.
         // The primary hit is always included, secondary hits only if emissive lights are enabled and the full light contribution hasn't been sampled elsewhere.
-        bool computeEmissive = isPrimaryHit || kUseEmissiveLights && (!kUseNEE || kUseMIS || !path.isLightSampled() || !isLightSamplable);
+        bool computeEmissive = isPrimaryHit || kUseEmissiveLights && (!path.isLightSampled() || !isLightSamplable);
 
         float3 attenuatedEmission = 0.f;
         if (computeEmissive && any(bsdfProperties.emission > 0.f))
         {
             float misWeight = 1.f;
             float lightPdf = 0.0f;
-            if (kUseEmissiveLights && kUseNEE && kUseMIS && isTriangleHit && !isPrimaryHit && path.isLightSampled() && isLightSamplable)
+            if (kUseEmissiveLights && isTriangleHit && !isPrimaryHit && path.isLightSampled() && isLightSamplable)
             {
                 // If NEE and MIS are enabled, and we've already sampled emissive lights,
                 // then we need to evaluate the MIS weight here to account for the remaining contribution.
@@ -993,7 +993,7 @@ struct PathTracer
         const bool hasNonDeltaLobes = (lobeTypes & (uint)LobeType::NonDelta) != 0;
 
         // Check if we should apply NEE.
-        const bool applyNEE = kUseNEE && hasNonDeltaLobes;
+        const bool applyNEE = hasNonDeltaLobes;
 
         // TODO: Support multiple shadow rays.
         path.setLightSampled(false, false);
@@ -1024,7 +1024,7 @@ struct PathTracer
                 // Apply MIS weight.
                 float misWeight = 1.0f;
                 float scatterPdf = 0.0f;
-                if (kUseMIS && ls.lightType != (uint)LightType::Analytic)
+                if (ls.lightType != (uint)LightType::Analytic)
                 {
                     scatterPdf = mi.evalPdf(sd, ls.dir, kUseBSDFSampling);
                     misWeight = evalMIS(1, ls.pdf, 1, scatterPdf);
@@ -1154,7 +1154,7 @@ struct PathTracer
         const bool isLastVertex = hasFinishedSurfaceBounces(path);
 
         // Terminate if this is the last path vertex and light sampling already completely sampled incident radiance.
-        if (kUseNEE && !kUseMIS && isLastVertex && path.isLightSamplable()) valid = false;
+        if (isLastVertex && path.isLightSamplable()) valid = false;
 
         // Terminate caustics paths.
         if (kDisableCaustics && path.getBounces(BounceType::Diffuse) > 0 && path.isSpecular()) valid = false;
@@ -1457,7 +1457,7 @@ struct PathTracer
         const bool isLightSamplable = path.isLightSamplable();
 
         // Add env radiance.
-        bool computeEnv = kUseEnvLight && (!kUseNEE || kUseMIS || !path.isLightSampled() || !isLightSamplable);
+        bool computeEnv = kUseEnvLight && (!path.isLightSampled() || !isLightSamplable);
 
         float3 emitterRadiance = 0.f;
         if (computeEnv)
@@ -1466,7 +1466,7 @@ struct PathTracer
 
             float misWeight = 1.f;
             float lightPdf = 0.0f;
-            if (kUseNEE && kUseMIS && path.isLightSampled() && isLightSamplable)
+            if (path.isLightSampled() && isLightSamplable)
             {
                 // If NEE and MIS are enabled, and we've already sampled the env map,
                 // then we need to evaluate the MIS weight here to account for the remaining contribution.
@@ -1556,7 +1556,7 @@ struct PathTracer
                 path.reservoir.selectedReconnection.subPixelJacobian = 1.0f / abs(pow(cosSensor, 3));
 
                 float focalPlaneZ = length(camera.data.cameraW);
-                float d0 = focalPlaneZ / dot(camDir, path.dir); 
+                float d0 = focalPlaneZ / dot(camDir, path.dir);
                 path.reservoir.selectedReconnection.lensVertexJacobian = (d0 * d0) / abs(cosSensor);
 
                 path.reservoir.selectedReconnection.firstWi = -path.dir;

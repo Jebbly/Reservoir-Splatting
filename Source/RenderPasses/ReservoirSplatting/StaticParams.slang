@@ -25,7 +25,7 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
- 
+
 __exported import Rendering.Materials.TexLODTypes;
 
 /** Translation of defines set by the host to compile-time constants used to
@@ -45,8 +45,6 @@ static const uint kMaxSpecularBounces = MAX_SPECULAR_BOUNCES;
 static const uint kMaxTransmissionBounces = MAX_TRANSMISSON_BOUNCES;
 static const bool kAdjustShadingNormals = ADJUST_SHADING_NORMALS;
 static const bool kUseBSDFSampling = USE_BSDF_SAMPLING;
-static const bool kUseNEE = USE_NEE;
-static const bool kUseMIS = USE_MIS;
 static const bool kUseRussianRoulette = USE_RUSSIAN_ROULETTE;
 static const bool kUseAlphaTest = USE_ALPHA_TEST;
 static const bool kUseLightsInDielectricVolumes = USE_LIGHTS_IN_DIELECTRIC_VOLUMES;

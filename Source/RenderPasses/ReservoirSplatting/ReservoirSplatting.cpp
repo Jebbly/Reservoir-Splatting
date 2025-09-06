@@ -106,8 +106,6 @@ namespace
     const std::string kFixedSeed = "fixedSeed";
     const std::string kUseBSDFSampling = "useBSDFSampling";
     const std::string kUseRussianRoulette = "useRussianRoulette";
-    const std::string kUseNEE = "useNEE";
-    const std::string kUseMIS = "useMIS";
     const std::string kMISHeuristic = "misHeuristic";
     const std::string kMISPowerExponent = "misPowerExponent";
     const std::string kEmissiveSampler = "emissiveSampler";
@@ -208,8 +206,6 @@ void ReservoirSplatting::parseProperties(const Properties& props)
         else if (key == kFixedSeed) { mParams.fixedSeed = value; mParams.useFixedSeed = true; }
         else if (key == kUseBSDFSampling) mStaticParams.useBSDFSampling = value;
         else if (key == kUseRussianRoulette) mStaticParams.useRussianRoulette = value;
-        else if (key == kUseNEE) mStaticParams.useNEE = value;
-        else if (key == kUseMIS) mStaticParams.useMIS = value;
         else if (key == kMISHeuristic) mStaticParams.misHeuristic = value;
         else if (key == kMISPowerExponent) mStaticParams.misPowerExponent = value;
         else if (key == kEmissiveSampler) mStaticParams.emissiveSampler = value;
@@ -327,8 +323,6 @@ Properties ReservoirSplatting::getProperties() const
     if (mParams.useFixedSeed) props[kFixedSeed] = mParams.fixedSeed;
     props[kUseBSDFSampling] = mStaticParams.useBSDFSampling;
     props[kUseRussianRoulette] = mStaticParams.useRussianRoulette;
-    props[kUseNEE] = mStaticParams.useNEE;
-    props[kUseMIS] = mStaticParams.useMIS;
     props[kMISHeuristic] = mStaticParams.misHeuristic;
     props[kMISPowerExponent] = mStaticParams.misPowerExponent;
     props[kEmissiveSampler] = mStaticParams.emissiveSampler;
@@ -583,7 +577,7 @@ bool ReservoirSplatting::renderReSTIRUI(Gui::Widgets& widget)
         {
             const bool noMotionBlur = (mpScene == nullptr) || (mpScene->getCamera()->getShutterSpeed() == 0.0);
 
-            // Make sure to delete the multi-splatting option if motion blur is disabled. 
+            // Make sure to delete the multi-splatting option if motion blur is disabled.
             std::function<bool(TemporalReuse)> filter = [noMotionBlur](TemporalReuse reuseOption) {
                 return !(noMotionBlur && reuseOption == TemporalReuse::MultiScatter);
             };
@@ -708,40 +702,33 @@ bool ReservoirSplatting::renderRenderingUI(Gui::Widgets& widget)
     dirty |= widget.checkbox("Russian Roulette", mStaticParams.useRussianRoulette);
     widget.tooltip("Use russian roulette to terminate low throughput paths.");
 
-    dirty |= widget.checkbox("Next-Event Estimation (NEE)", mStaticParams.useNEE);
-    widget.tooltip("Use next-event estimation.\nThis option enables direct illumination sampling at each path vertex.");
+    dirty |= widget.dropdown("MIS Heuristic", mStaticParams.misHeuristic);
 
-    if (mStaticParams.useNEE)
+    if (mStaticParams.misHeuristic == MISHeuristic::PowerExp)
     {
-        dirty |= widget.checkbox("Multiple Importance Sampling (MIS)", mStaticParams.useMIS);
-        widget.tooltip("When enabled, BSDF sampling is combined with light sampling for the environment map and emissive lights.\n"
-            "Note that MIS has currently no effect on analytic lights.");
+        dirty |= widget.var("MIS Power Exponent", mStaticParams.misPowerExponent, 0.01f, 10.f);
+    }
 
-        if (mStaticParams.useMIS)
+    if (mpScene && mpScene->useEmissiveLights())
+    {
+        if (auto group = widget.group("Emissive Sampler"))
         {
-            dirty |= widget.dropdown("MIS Heuristic", mStaticParams.misHeuristic);
+            // LightBVHs cannot be used with ReSTIR.
+            bool enabledReSTIR = mReSTIRParams.enableTemporalResampling || mReSTIRParams.enableSpatialResampling;
+            std::function<bool(EmissiveLightSamplerType)> filter = [enabledReSTIR](EmissiveLightSamplerType lightSampler)
+            { return !(enabledReSTIR && lightSampler == EmissiveLightSamplerType::LightBVH) &&
+                      (lightSampler != EmissiveLightSamplerType::Null); };
 
-            if (mStaticParams.misHeuristic == MISHeuristic::PowerExp)
+            if (widget.dropdown("Emissive Sampler", mStaticParams.emissiveSampler, false, filter))
             {
-                dirty |= widget.var("MIS Power Exponent", mStaticParams.misPowerExponent, 0.01f, 10.f);
+                resetLighting();
+                dirty = true;
             }
-        }
+            widget.tooltip("Selects which light sampler to use for importance sampling of emissive geometry.", true);
 
-        if (mpScene && mpScene->useEmissiveLights())
-        {
-            if (auto group = widget.group("Emissive Sampler"))
+            if (mpEmissiveSampler)
             {
-                if (widget.dropdown("Emissive Sampler", mStaticParams.emissiveSampler))
-                {
-                    resetLighting();
-                    dirty = true;
-                }
-                widget.tooltip("Selects which light sampler to use for importance sampling of emissive geometry.", true);
-
-                if (mpEmissiveSampler)
-                {
-                    if (mpEmissiveSampler->renderUI(group)) mOptionsChanged = true;
-                }
+                if (mpEmissiveSampler->renderUI(group)) mOptionsChanged = true;
             }
         }
     }
@@ -967,8 +954,8 @@ void ReservoirSplatting::updatePrograms()
     // if (!mpInitialCandidatesPass)
     //     mpInitialCandidatesPass = std::make_unique<TracePass>(mpDevice, kInitialCandidatesFile, "initialCandidates", "", mpScene, defines, globalTypeConformances);
     // mpInitialCandidatesPass->prepareProgram(mpDevice, defines);
-    
-    if (!mpInitialCandidatesPass)    
+
+    if (!mpInitialCandidatesPass)
     {
         ProgramDesc desc = baseDesc;
         desc.addShaderLibrary(kInitialCandidatesFile).csEntry("main");
@@ -1971,7 +1958,7 @@ void ReservoirSplatting::multiScatterTemporalResampling(RenderContext* pRenderCo
         var["cellOffsets"][i] = mMultiCellOffsets[i];
         var["sortedReservoirs"][i] = mMultiSortedReservoirs[i];
     }
-  
+
     var["prevReservoirs"] = mpPrevReservoirs;
     var["currReservoirs"] = mpCurrReservoirs;
     var["prevReconnectionData"] = mpPrevReconnectionData;
@@ -2060,8 +2047,6 @@ DefineList ReservoirSplatting::StaticParams::getDefines(const ReservoirSplatting
     defines.add("MAX_TRANSMISSON_BOUNCES", std::to_string(maxTransmissionBounces));
     defines.add("ADJUST_SHADING_NORMALS", adjustShadingNormals ? "1" : "0");
     defines.add("USE_BSDF_SAMPLING", useBSDFSampling ? "1" : "0");
-    defines.add("USE_NEE", useNEE ? "1" : "0");
-    defines.add("USE_MIS", useMIS ? "1" : "0");
     defines.add("USE_RUSSIAN_ROULETTE", useRussianRoulette ? "1" : "0");
     defines.add("USE_ALPHA_TEST", useAlphaTest ? "1" : "0");
     defines.add("USE_LIGHTS_IN_DIELECTRIC_VOLUMES", useLightsInDielectricVolumes ? "1" : "0");

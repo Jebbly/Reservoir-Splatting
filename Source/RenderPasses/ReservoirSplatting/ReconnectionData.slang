@@ -158,7 +158,7 @@ struct ReconnectionData
         this.subPixel = shiftedPath.fractionalPixel - floor(shiftedPath.fractionalPixel);
         this.lensSample = shiftedPath.lensSample;
         this.firstWi = -shiftedPath.firstRayDir;
-        
+
         this.subPixelJacobian = shiftedPath.subPixelJacobian;
         this.lensVertexJacobian = shiftedPath.lensVertexJacobian;
         this.secondaryPathJacobian = shiftedPath.secondaryPathJacobian;
