@@ -726,6 +726,15 @@ bool ReservoirSplatting::renderRenderingUI(Gui::Widgets& widget)
             }
             widget.tooltip("Selects which light sampler to use for importance sampling of emissive geometry.", true);
 
+            // There is a case where the LightBVH was selected before ReSTIR was enabled.
+            // In this case, we should default back to the power emissive light sampler.
+            if (enabledReSTIR && mStaticParams.emissiveSampler == EmissiveLightSamplerType::LightBVH)
+            {
+                resetLighting();
+                dirty = true;
+                mStaticParams.emissiveSampler = EmissiveLightSamplerType::Power;
+            }
+
             if (mpEmissiveSampler)
             {
                 if (mpEmissiveSampler->renderUI(group)) mOptionsChanged = true;
