@@ -104,7 +104,6 @@ namespace
 
     const std::string kSampleGenerator = "sampleGenerator";
     const std::string kFixedSeed = "fixedSeed";
-    const std::string kUseBSDFSampling = "useBSDFSampling";
     const std::string kUseRussianRoulette = "useRussianRoulette";
     const std::string kMISHeuristic = "misHeuristic";
     const std::string kMISPowerExponent = "misPowerExponent";
@@ -204,7 +203,6 @@ void ReservoirSplatting::parseProperties(const Properties& props)
         // Sampling parameters
         else if (key == kSampleGenerator) mStaticParams.sampleGenerator = value;
         else if (key == kFixedSeed) { mParams.fixedSeed = value; mParams.useFixedSeed = true; }
-        else if (key == kUseBSDFSampling) mStaticParams.useBSDFSampling = value;
         else if (key == kUseRussianRoulette) mStaticParams.useRussianRoulette = value;
         else if (key == kMISHeuristic) mStaticParams.misHeuristic = value;
         else if (key == kMISPowerExponent) mStaticParams.misPowerExponent = value;
@@ -321,7 +319,6 @@ Properties ReservoirSplatting::getProperties() const
     // Sampling parameters
     props[kSampleGenerator] = mStaticParams.sampleGenerator;
     if (mParams.useFixedSeed) props[kFixedSeed] = mParams.fixedSeed;
-    props[kUseBSDFSampling] = mStaticParams.useBSDFSampling;
     props[kUseRussianRoulette] = mStaticParams.useRussianRoulette;
     props[kMISHeuristic] = mStaticParams.misHeuristic;
     props[kMISPowerExponent] = mStaticParams.misPowerExponent;
@@ -694,10 +691,6 @@ bool ReservoirSplatting::renderRenderingUI(Gui::Widgets& widget)
         mpSampleGenerator = SampleGenerator::create(mpDevice, mStaticParams.sampleGenerator);
         dirty = true;
     }
-
-    dirty |= widget.checkbox("BSDF Importance Sampling", mStaticParams.useBSDFSampling);
-    widget.tooltip("BSDF importance sampling should normally be enabled.\n\n"
-        "If disabled, cosine-weighted hemisphere sampling is used for debugging purposes");
 
     dirty |= widget.checkbox("Russian Roulette", mStaticParams.useRussianRoulette);
     widget.tooltip("Use russian roulette to terminate low throughput paths.");
@@ -2055,7 +2048,6 @@ DefineList ReservoirSplatting::StaticParams::getDefines(const ReservoirSplatting
     defines.add("MAX_SPECULAR_BOUNCES", std::to_string(maxSpecularBounces));
     defines.add("MAX_TRANSMISSON_BOUNCES", std::to_string(maxTransmissionBounces));
     defines.add("ADJUST_SHADING_NORMALS", adjustShadingNormals ? "1" : "0");
-    defines.add("USE_BSDF_SAMPLING", useBSDFSampling ? "1" : "0");
     defines.add("USE_RUSSIAN_ROULETTE", useRussianRoulette ? "1" : "0");
     defines.add("USE_ALPHA_TEST", useAlphaTest ? "1" : "0");
     defines.add("USE_LIGHTS_IN_DIELECTRIC_VOLUMES", useLightsInDielectricVolumes ? "1" : "0");

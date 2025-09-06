@@ -316,7 +316,7 @@ struct PathTracer
     bool generateGuideRay(const ShadingData sd, const IMaterialInstance mi, inout PathState path)
     {
         BSDFSample result;
-        bool valid = mi.sample(sd, path.sg, result, kUseBSDFSampling);
+        bool valid = mi.sample(sd, path.sg, result, true);
         if (valid) valid = generateScatterRay(result, sd, mi, path);
 
         return valid;
@@ -334,7 +334,7 @@ struct PathTracer
 
         // Set the lobe mask to a non-zero value, so that the PDF is only of the sampled lobe.
         sd.mtl.setLobeMask(1);
-        bool valid = mi.sample(sd, path.sg, result, kUseBSDFSampling);
+        bool valid = mi.sample(sd, path.sg, result, true);
         path.pdf = result.pdf; // Lobe-specific PDF.
 
         uint componentType = 0;
@@ -367,7 +367,7 @@ struct PathTracer
 
         // Set the lobe mask back to 0 to get the total PDF.
         sd.mtl.setLobeMask(0xF);
-        path.totalPdf = mi.evalPdf(sd, result.wo, kUseBSDFSampling);
+        path.totalPdf = mi.evalPdf(sd, result.wo, true);
 
         if (valid) generateScatterRay({result.wo, result.pdf, result.weight, result.lobeType}, sd, mi, path);
 
@@ -1026,7 +1026,7 @@ struct PathTracer
                 float scatterPdf = 0.0f;
                 if (ls.lightType != (uint)LightType::Analytic)
                 {
-                    scatterPdf = mi.evalPdf(sd, ls.dir, kUseBSDFSampling);
+                    scatterPdf = mi.evalPdf(sd, ls.dir, true);
                     misWeight = evalMIS(1, ls.pdf, 1, scatterPdf);
                 }
 
@@ -1302,7 +1302,7 @@ struct PathTracer
 
         sd.mtl.setLobeMask(1 << reconnectionData.firstBSDFComponentType);
         float3 lobeScatterBsdf = mi.eval(sd, nextDir, path.sg);
-        float lobeScatterPdf = mi.evalPdf(sd, nextDir, kUseBSDFSampling);
+        float lobeScatterPdf = mi.evalPdf(sd, nextDir, true);
         // print("Lobe Scatter BSDF", lobeScatterBsdf);
         // print("Lobe Scatter PDF", lobeScatterPdf);
 
@@ -1310,7 +1310,7 @@ struct PathTracer
         // Here we use the total PDF when computing the MIS weights.
         sd.mtl.setLobeMask(0);
         float3 totalScatterBsdf = mi.eval(sd, nextDir, path.sg);
-        float totalScatterPdf = mi.evalPdf(sd, nextDir, kUseBSDFSampling);
+        float totalScatterPdf = mi.evalPdf(sd, nextDir, true);
         // print("Total Scatter BSDF", totalScatterBsdf);
         // print("Total Scatter PDF", totalScatterPdf);
 

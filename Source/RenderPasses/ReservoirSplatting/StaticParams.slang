@@ -44,7 +44,6 @@ static const uint kMaxDiffuseBounces = MAX_DIFFUSE_BOUNCES;
 static const uint kMaxSpecularBounces = MAX_SPECULAR_BOUNCES;
 static const uint kMaxTransmissionBounces = MAX_TRANSMISSON_BOUNCES;
 static const bool kAdjustShadingNormals = ADJUST_SHADING_NORMALS;
-static const bool kUseBSDFSampling = USE_BSDF_SAMPLING;
 static const bool kUseRussianRoulette = USE_RUSSIAN_ROULETTE;
 static const bool kUseAlphaTest = USE_ALPHA_TEST;
 static const bool kUseLightsInDielectricVolumes = USE_LIGHTS_IN_DIELECTRIC_VOLUMES;

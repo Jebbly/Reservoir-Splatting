@@ -131,12 +131,11 @@ private:
         uint32_t    maxTransmissionBounces = 9;                 ///< Max number of transmission bounces (0 = none), up to kMaxBounces.
 
         // Sampling parameters
-        uint32_t    sampleGenerator = SAMPLE_GENERATOR_TINY_UNIFORM; ///< Pseudorandom sample generator type.
-        bool        useBSDFSampling = true;                     ///< Use BRDF importance sampling, otherwise cosine-weighted hemisphere sampling.
-        bool        useRussianRoulette = true;                  ///< Use russian roulette to terminate low throughput paths.
-        MISHeuristic misHeuristic = MISHeuristic::Balance;      ///< MIS heuristic.
-        float       misPowerExponent = 2.f;                     ///< MIS exponent for the power heuristic. This is only used when 'PowerExp' is chosen.
-        EmissiveLightSamplerType emissiveSampler = EmissiveLightSamplerType::Power;  ///< Emissive light sampler to use for NEE. The LightBVH is (potentially) position dependent, so it should be avoided.
+        uint32_t    sampleGenerator = SAMPLE_GENERATOR_TINY_UNIFORM;                ///< Pseudorandom sample generator type.
+        bool        useRussianRoulette = true;                                      ///< Use russian roulette to terminate low throughput paths.
+        MISHeuristic misHeuristic = MISHeuristic::Balance;                          ///< MIS heuristic.
+        float       misPowerExponent = 2.f;                                         ///< MIS exponent for the power heuristic. This is only used when 'PowerExp' is chosen.
+        EmissiveLightSamplerType emissiveSampler = EmissiveLightSamplerType::Power; ///< Emissive light sampler to use for NEE. The LightBVH is (potentially) position dependent, so it should be avoided.
 
         // Material parameters
         bool        useAlphaTest = true;                        ///< Use alpha testing on non-opaque triangles.
